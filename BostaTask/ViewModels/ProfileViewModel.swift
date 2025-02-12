@@ -6,7 +6,6 @@
 //
 import Foundation
 import Combine
-import Moya
 
 class ProfileViewModel: ObservableObject {
     @Published var user: User? = nil
@@ -15,63 +14,56 @@ class ProfileViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
     
     private var cancellables = Set<AnyCancellable>()
-    private let provider = MoyaProvider<JSONPlaceholderAPI>()
+    private let userRepository: UserRepositoryType
+    
+    init(
+        userRepository: UserRepositoryType = UserRepository()
+    ) {
+        self.userRepository = userRepository
+    }
     
     
     func fetchUser() {
-        defer{
-            print("end")
-        }
-        print("start")
         isLoading = true
         errorMessage = nil
         
-        provider.request(.users) { [weak self] result in
-            guard let self = self else { return }
-            
-            switch result {
-            case .success(let response):
-                do {
-                    let users = try JSONDecoder().decode([User].self, from: response.data)
-                    if let randomUser = users.randomElement() {
-                        self.user = randomUser
-                        self.fetchAlbums(userId: randomUser.id)
-                        print("User data received: \(users)")
-                    } else {
-                        self.errorMessage = "No users found"
-                        self.isLoading = false
-                    }
-                } catch {
-                    self.errorMessage = "Failed to decode users: \(error.localizedDescription)"
-                    self.isLoading = false
+        userRepository.fetchUsers()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] completion in
+                switch completion {
+                case .finished:
+                    break
+                case .failure(let error):
+                    self?.errorMessage = "Failed to fetch users: \(error.localizedDescription)"
+                    self?.isLoading = false
                 }
-                
-            case .failure(let error):
-                self.errorMessage = "Failed to fetch users: \(error.localizedDescription)"
-                print("Failed to fetch user: \(error.localizedDescription)")
-                self.isLoading = false
+            } receiveValue: { [weak self] users in
+                if let randomUser = users.randomElement() {
+                    self?.user = randomUser
+                    self?.fetchAlbums(userId: randomUser.id)
+                } else {
+                    self?.errorMessage = "No users found"
+                    self?.isLoading = false
+                }
             }
-        }
+            .store(in: &cancellables)
     }
     
     private func fetchAlbums(userId: Int) {
-        provider.request(.albums(userId: userId)) { [weak self] result in
-            guard let self = self else { return }
-            
-            switch result {
-            case .success(let response):
-                do {
-                    let albums = try JSONDecoder().decode([Album].self, from: response.data)
-                    self.albums = albums
-                } catch {
-                    self.errorMessage = "Failed to decode albums: \(error.localizedDescription)"
+        userRepository.fetchAlbums(userId: userId)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] completion in
+                switch completion {
+                case .finished:
+                    break
+                case .failure(let error):
+                    self?.errorMessage = "Failed to fetch albums: \(error.localizedDescription)"
                 }
-                
-            case .failure(let error):
-                self.errorMessage = "Failed to fetch albums: \(error.localizedDescription)"
+                self?.isLoading = false
+            } receiveValue: { [weak self] albums in
+                self?.albums = albums
             }
-            
-            self.isLoading = false
-        }
+            .store(in: &cancellables)
     }
+    
 }

@@ -40,5 +40,18 @@ extension JSONPlaceholderAPI: TargetType {
     
     var headers: [String: String]? { nil }
 }
+protocol CommonTargetType: TargetType{
+    
+}
+extension CommonTargetType{
+    var baseURL: URL { URL(string: "https://jsonplaceholder.typicode.com")! }
+    var method: Moya.Method { .get}
+    var headers: [String: String]? { nil }
+    
+    
+    
+}
 
-let provider = MoyaProvider<JSONPlaceholderAPI>()
+
+
+
