@@ -20,11 +20,11 @@ class UserRepository: UserRepositoryType, RepositoryCommon {
     let provider = MoyaProvider<JSONPlaceholderAPI>()
     
     func fetchUsers() -> AnyPublisher<[User], Error> {
-        return request(.users, decodeTo: [User].self)
+        return request(.users)
     }
     
     func fetchAlbums(userId: Int) -> AnyPublisher<[Album], Error> {
-        return request(.albums(userId: userId), decodeTo: [Album].self)
+        return request(.albums(userId: userId))
     }
 }
 

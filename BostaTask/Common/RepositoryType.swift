@@ -12,11 +12,11 @@ import Combine
 protocol RepositoryType {}
 protocol RepositoryCommon: RepositoryType {
     var provider: MoyaProvider<JSONPlaceholderAPI> { get }
-    func request<T: Decodable>(_ target: JSONPlaceholderAPI, decodeTo type: T.Type) -> AnyPublisher<T, Error>
+    func request<T: Decodable>(_ target: JSONPlaceholderAPI) -> AnyPublisher<T, Error>
 
 }
 extension RepositoryCommon{
-    func request<T: Decodable>(_ target: JSONPlaceholderAPI, decodeTo type: T.Type) -> AnyPublisher<T, Error> {
+    func request<T: Decodable>(_ target: JSONPlaceholderAPI) -> AnyPublisher<T, Error> {
         return Future<T, Error> { promise in
             self.provider.request(target) { result in
                 switch result {
