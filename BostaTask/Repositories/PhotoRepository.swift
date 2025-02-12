@@ -10,13 +10,13 @@ import Moya
 import Combine
 
 protocol PhotosRepositoryType: RepositoryType{
-    func fetchAlbum() -> AnyPublisher<[Album], Error>
+    func fetchPhotos(albumId: Int) -> AnyPublisher<[Album], Error>
 }
 
 class PhotoRepository: PhotosRepositoryType, RepositoryCommon{
     let provider = MoyaProvider<JSONPlaceholderAPI>()
     
-    func fetchAlbum() -> AnyPublisher<[Album], Error> {
-        return request(.users, decodeTo: [Album].self)
+    func fetchPhotos(albumId: Int) -> AnyPublisher<[Album], Error> {
+        return request(.photos(albumId: albumId),decodeTo: [Album].self)
     }
 }
